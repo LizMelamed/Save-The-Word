@@ -1,0 +1,73 @@
+# =========================
+# OS / Editor
+# =========================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# =========================
+# Node / Frontend (React + Vite)
+# =========================
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.env
+frontend/.env.*
+
+# =========================
+# Python / Backend
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.log
+
+backend/venv/
+backend/.venv/
+backend/.env
+backend/.env.*
+
+# =========================
+# Build / Cache
+# =========================
+.cache/
+.parcel-cache/
+.npm/
+.pnpm-store/
+.yarn/cache/
+
+# =========================
+# Data / Models
+# =========================
+data/
+models/
+*.pkl
+*.joblib
+
+# =========================
+# Logs / Temp
+# =========================
+logs/
+tmp/
+temp/
+*.tmp
+
+# =========================
+# Secrets
+# =========================
+*.key
+*.pem
+*.crt
+
+# =========================
+# Jupyter / Experiments
+# =========================
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# ======
