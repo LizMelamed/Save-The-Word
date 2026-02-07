@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+joblib
+numpy
+openai
+httpx
+python-dotenv
+statsmodels
+wordfreq
+pandas
