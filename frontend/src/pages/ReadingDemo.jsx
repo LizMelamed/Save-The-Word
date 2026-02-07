@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import ReadingLine from "../components/ReadingLine";
 import { useReadingTracker } from "../hooks/useReadingTracker";
 import { speakText } from "../utils/speech";
+import { apiUrl } from "../utils/api";
 
 const DEFAULT_STORY = [
   "Luna the unicorn lived near a green hill.",
@@ -137,7 +138,7 @@ export default function ReadingDemo({
     setStoryFetchError(false);
     setQuestionError(false);
 
-    fetch("/generate-story", {
+    fetch(apiUrl("/generate-story"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -319,7 +320,7 @@ export default function ReadingDemo({
     }
 
     try {
-      const res = await fetch("/predict-reading-skill", {
+      const res = await fetch(apiUrl("/predict-reading-skill"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(metrics),

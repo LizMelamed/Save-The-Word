@@ -8,6 +8,7 @@ import Assessment from "./pages/Assessment";
 import AssessmentStart from "./pages/AssessmentStart";
 import Game from "./pages/Game";
 import { speakText } from "./utils/speech";
+import { apiUrl } from "./utils/api";
 
 
 export default function App() {
@@ -50,7 +51,7 @@ export default function App() {
       (lastSession?.quiz?.total
         ? lastSession.quiz.correct_count / lastSession.quiz.total
         : null);
-    fetch("/generate-story", {
+    fetch(apiUrl("/generate-story"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
