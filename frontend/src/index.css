@@ -5,16 +5,25 @@
 body {
   margin: 0;
   font-family: system-ui, sans-serif;
+  background: #e8fafd;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 #root {
-  cursor: url("/cursor-hand.png") 16 0, auto;
+  width: 100vw;
+  height: 100dvh;
 }
 
 html, body, #root {
-  cursor: url("/cursor-hand.png") 24 24, auto !important;
+  cursor: url("/cursor-hand.png") 6 6, pointer !important;
 }
 
-button, a {
-  cursor: inherit !important;
+*,
+*::before,
+*::after {
+  cursor: url("/cursor-hand.png") 6 6, pointer !important;
 }
