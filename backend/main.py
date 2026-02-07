@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import joblib
 import numpy as np
@@ -19,6 +20,22 @@ import traceback
 from wordfreq import zipf_frequency
 
 app = FastAPI()
+
+# CORS for frontend deployments (Vercel, etc.)
+allowed_origins = [
+    "https://save-the-word.vercel.app",
+    "https://save-the-word.onrender.com",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Load env vars from backend/.env if present
 load_dotenv()
