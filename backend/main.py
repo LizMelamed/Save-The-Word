@@ -24,6 +24,7 @@ app = FastAPI()
 # CORS for frontend deployments (Vercel, etc.)
 allowed_origins = [
     "https://save-the-word.vercel.app",
+    "https://save-the-wordd.vercel.app",
     "https://save-the-word.onrender.com",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
