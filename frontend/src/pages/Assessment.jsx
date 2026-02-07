@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import ReadingLine from "../components/ReadingLine";
 import { useReadingTracker } from "../hooks/useReadingTracker";
 import { speakText } from "../utils/speech";
+import { apiUrl } from "../utils/api";
 
 const ASSESSMENT_STORIES_COUNT = 2;
 const ASSESSMENT_SENTENCES = 4;
@@ -76,7 +77,7 @@ export default function Assessment({ profile, interests, onDone }) {
     try {
       const loaded = [];
       for (let i = 0; i < ASSESSMENT_STORIES_COUNT; i += 1) {
-        const res = await fetch("/generate-story", {
+          const res = await fetch(apiUrl("/generate-story"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -143,7 +144,7 @@ export default function Assessment({ profile, interests, onDone }) {
 
   async function logToBackend(payload) {
     try {
-      await fetch("/log-session", {
+      await fetch(apiUrl("/log-session"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "assessment", payload }),
@@ -163,7 +164,7 @@ export default function Assessment({ profile, interests, onDone }) {
     }
     let predicted = null;
     try {
-      const res = await fetch("/predict-reading-skill", {
+      const res = await fetch(apiUrl("/predict-reading-skill"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(aggregate),

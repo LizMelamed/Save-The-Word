@@ -3,6 +3,7 @@ import ReadingLine from "../components/ReadingLine";
 import ThemeSelect from "./ThemeSelect";
 import { useReadingTracker } from "../hooks/useReadingTracker";
 import { speakText } from "../utils/speech";
+import { apiUrl } from "../utils/api";
 
 const TOTAL_ROUNDS = 5;
 const SENTENCES_PER_STORY = 5;
@@ -116,7 +117,7 @@ export default function Game({ profile, interests, onChangeThemes, onBackToIntro
 
   async function logToBackend(type, payload) {
     try {
-      await fetch("/log-session", {
+      await fetch(apiUrl("/log-session"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type, payload }),
@@ -130,7 +131,7 @@ export default function Game({ profile, interests, onChangeThemes, onBackToIntro
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/generate-story", {
+      const res = await fetch(apiUrl("/generate-story"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -224,7 +225,7 @@ export default function Game({ profile, interests, onChangeThemes, onBackToIntro
     }
     let predicted = null;
     try {
-      const res = await fetch("/predict-reading-skill", {
+      const res = await fetch(apiUrl("/predict-reading-skill"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(metrics),
