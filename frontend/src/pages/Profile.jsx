@@ -63,7 +63,12 @@ export default function Profile({ onNext }) {
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => onNext({ name, age })}
-            className="bg-[#4B50B6] text-yellow-300 text-xl md:text-2xl font-bold px-12 md:px-20 py-3 md:py-4 rounded-full shadow-xl hover:bg-[#4348a3] transition"
+            disabled={!name.trim() || !age}
+            className={`text-yellow-300 text-xl md:text-2xl font-bold px-12 md:px-20 py-3 md:py-4 rounded-full shadow-xl transition ${
+              !name.trim() || !age
+                ? "bg-[#8AA1D6] opacity-60 cursor-not-allowed"
+                : "bg-[#4B50B6] hover:bg-[#4348a3]"
+            }`}
           >
             Next
           </motion.button>
