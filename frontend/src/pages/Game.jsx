@@ -5,7 +5,8 @@ import { useReadingTracker } from "../hooks/useReadingTracker";
 import { speakText } from "../utils/speech";
 import { apiUrl } from "../utils/api";
 
-const TOTAL_ROUNDS = 5;
+const TOTAL_ROUNDS = 4;
+const MINI_GAME_AFTER_ROUND = 2;
 const SENTENCES_PER_STORY = 5;
 const SESSIONS_STORAGE_KEY = "save-the-word.sessions";
 const ASSESSMENT_STORAGE_KEY = "save-the-word.assessment";
@@ -74,7 +75,7 @@ export default function Game({ profile, interests, onChangeThemes, onBackToIntro
   );
 
   const [roundIndex, setRoundIndex] = useState(0);
-  const [phase, setPhase] = useState("reading"); // reading | questions | intermission | themeSelect | parentReport
+  const [phase, setPhase] = useState("reading"); // reading | questions | intermission | themeSelect | minigame | parentReport
   const [story, setStory] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [storyMeta, setStoryMeta] = useState(null);
@@ -87,8 +88,19 @@ export default function Game({ profile, interests, onChangeThemes, onBackToIntro
   const [nextRoundIndex, setNextRoundIndex] = useState(null);
   const [exportPassword, setExportPassword] = useState("");
   const [exportError, setExportError] = useState("");
+  const [parentPassword, setParentPassword] = useState("");
+  const [parentAccessGranted, setParentAccessGranted] = useState(false);
+  const [parentAccessError, setParentAccessError] = useState("");
   const [nextWordIndex, setNextWordIndex] = useState(0);
   const [missedIndices, setMissedIndices] = useState(new Set());
+  const [caughtStars, setCaughtStars] = useState(0);
+  const [miniStars, setMiniStars] = useState([
+    { id: 1, top: "20%", left: "20%" },
+    { id: 2, top: "30%", left: "70%" },
+    { id: 3, top: "55%", left: "35%" },
+    { id: 4, top: "65%", left: "75%" },
+    { id: 5, top: "40%", left: "50%" },
+  ]);
   const [stars, setStars] = useState(() => {
     const stored = Number(localStorage.getItem(STARS_STORAGE_KEY));
     return Number.isFinite(stored) ? stored : 0;
@@ -297,7 +309,9 @@ export default function Game({ profile, interests, onChangeThemes, onBackToIntro
       setStars(nextStars);
     }
 
-    if (roundIndex + 1 >= TOTAL_ROUNDS) {
+    if (roundIndex === MINI_GAME_AFTER_ROUND) {
+      setPhase("minigame");
+    } else if (roundIndex + 1 >= TOTAL_ROUNDS) {
       setPhase("parentReport");
     } else {
       setNextRoundIndex(roundIndex + 1);
@@ -310,6 +324,21 @@ export default function Game({ profile, interests, onChangeThemes, onBackToIntro
     setNextRoundIndex(null);
     resetRoundState();
     setPhase("reading");
+    generateStoryForRound();
+  }
+
+  function startMiniGameNextRound() {
+    setCaughtStars(0);
+    setMiniStars([
+      { id: 1, top: "20%", left: "20%" },
+      { id: 2, top: "30%", left: "70%" },
+      { id: 3, top: "55%", left: "35%" },
+      { id: 4, top: "65%", left: "75%" },
+      { id: 5, top: "40%", left: "50%" },
+    ]);
+    setPhase("reading");
+    setRoundIndex(roundIndex + 1);
+    resetRoundState();
     generateStoryForRound();
   }
 
@@ -737,132 +766,249 @@ export default function Game({ profile, interests, onChangeThemes, onBackToIntro
         </div>
       )}
 
+      {phase === "minigame" && (
+        <div className="absolute inset-0 bg-[#E8FAFD] flex flex-col items-center justify-center px-6">
+          <h2 className="text-3xl font-bold text-[#1F2A44] mb-3">
+            Star Catch Break!
+          </h2>
+          <p className="text-lg text-[#1F2A44] mb-6">
+            Catch 5 stars to continue.
+          </p>
+          <div className="relative w-full max-w-3xl h-[50vh]">
+            {miniStars.map((star) => (
+              <button
+                key={star.id}
+                className="absolute text-4xl md:text-5xl drop-shadow cursor-pointer"
+                style={{ top: star.top, left: star.left }}
+                onClick={() => {
+                  setMiniStars((prev) =>
+                    prev.filter((s) => s.id !== star.id)
+                  );
+                  setCaughtStars((prev) => prev + 1);
+                }}
+              >
+                ⭐
+              </button>
+            ))}
+          </div>
+          <div className="text-xl font-semibold text-[#1F2A44] mb-4">
+            Stars caught: {caughtStars} / 5
+          </div>
+          <button
+            className={`bg-[#4B50B6] text-yellow-200 text-xl font-bold px-12 py-3 rounded-full shadow-lg transition ${
+              caughtStars >= 5 ? "hover:bg-[#4348a3]" : "opacity-60 cursor-not-allowed"
+            }`}
+            disabled={caughtStars < 5}
+            onClick={() => startMiniGameNextRound()}
+          >
+            Continue
+          </button>
+          <div className="absolute bottom-4 right-4">
+            <img
+              src="/read-to-me.png"
+              className="w-[100px] md:w-[140px] cursor-pointer hover:scale-105 transition"
+              alt="Read To Me"
+              onClick={() =>
+                speakText(
+                  "Catch five stars to continue to the next reading round."
+                )
+              }
+            />
+          </div>
+        </div>
+      )}
+
       {phase === "parentReport" && parentReport && (
         <div className="absolute inset-0 bg-[#E8FAFD]/90 flex items-center justify-center px-6">
-          <div className="bg-white/80 rounded-3xl shadow-xl p-8 max-w-3xl text-center">
-            <h2 className="text-3xl font-bold text-[#1F2A44] mb-4">
-              Parent Progress Report
-            </h2>
-            <div className="text-lg text-[#1F2A44] space-y-2 mb-6">
-              {Number.isFinite(parentReport.startSpeed) &&
-                Number.isFinite(parentReport.endSpeed) && (
-                  <p>
-                    Reading speed: {parentReport.startSpeed.toFixed(1)} →{" "}
-                    {parentReport.endSpeed.toFixed(1)} wpm
-                  </p>
-                )}
-              {Number.isFinite(parentReport.improvement) && (
-                <p>
-                  Speed change:{" "}
-                  {parentReport.improvement >= 0 ? "+" : ""}
-                  {parentReport.improvement.toFixed(1)} wpm
-                </p>
-              )}
-              <p>
-                Average comprehension:{" "}
-                {(parentReport.avgComprehension * 100).toFixed(0)}%
+          {!parentAccessGranted ? (
+            <div className="bg-white/80 rounded-3xl shadow-xl p-8 max-w-2xl text-center">
+              <h2 className="text-2xl md:text-3xl font-bold text-[#1F2A44] mb-4">
+                Parents Only
+              </h2>
+              <p className="text-lg text-[#1F2A44] mb-6">
+                Enter the parent password to view the progress report.
               </p>
-            </div>
-            {parentReport.reviewWords.length > 0 && (
-              <div className="text-left">
-                <p className="font-semibold text-[#1F2A44] mb-2">
-                  Words to review together:
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {parentReport.reviewWords.map((word) => (
-                    <span
-                      key={word}
-                      className="bg-[#FFE066] text-[#1F2A44] px-3 py-1 rounded-full text-sm font-semibold"
-                    >
-                      {word}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div className="mt-6 text-left">
-              <p className="font-semibold text-[#1F2A44] mb-2">
-                Export logs (parents only)
-              </p>
-              <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">
+              <div className="flex flex-col md:flex-row gap-3 items-center justify-center">
                 <input
                   type="password"
-                  value={exportPassword}
-                  onChange={(e) => setExportPassword(e.target.value)}
+                  value={parentPassword}
+                  onChange={(e) => setParentPassword(e.target.value)}
                   placeholder="Password"
                   className="px-4 py-2 rounded-lg border border-[#cbd5f0] outline-none"
                 />
                 <button
                   className="bg-[#4B50B6] text-yellow-200 text-lg font-bold px-6 py-2 rounded-full shadow-lg hover:bg-[#4348a3] transition"
-                  onClick={handleExportCsv}
+                  onClick={() => {
+                    if (parentPassword === "1234") {
+                      setParentAccessGranted(true);
+                      setParentAccessError("");
+                    } else {
+                      setParentAccessError("Wrong password");
+                    }
+                  }}
                 >
-                  Export CSV
+                  View report
                 </button>
-                {exportError && (
-                  <span className="text-sm text-red-600">{exportError}</span>
-                )}
+              </div>
+              {parentAccessError && (
+                <div className="text-sm text-red-600 mt-2">
+                  {parentAccessError}
+                </div>
+              )}
+              <div className="mt-8">
+                <button
+                  className="bg-[#4B50B6] text-yellow-200 text-xl font-bold px-12 py-3 rounded-full shadow-lg hover:bg-[#4348a3] transition"
+                  onClick={() => {
+                    const sessions = JSON.parse(
+                      localStorage.getItem(GAME_SESSIONS_KEY) || "[]"
+                    );
+                    const summary = {
+                      timestamp: new Date().toISOString(),
+                      rounds,
+                      parent_report: parentReport,
+                    };
+                    localStorage.setItem(
+                      GAME_SESSIONS_KEY,
+                      JSON.stringify([...sessions, summary])
+                    );
+                    setRounds([]);
+                    setRoundIndex(0);
+                    setNextRoundIndex(null);
+                    resetRoundState();
+                    setPhase("reading");
+                    generateStoryForRound();
+                  }}
+                >
+                  Continue to new game
+                </button>
               </div>
             </div>
-            <div className="mt-6 flex flex-col md:flex-row gap-4 justify-center">
-              <button
-                className="bg-[#4B50B6] text-yellow-200 text-xl font-bold px-12 py-3 rounded-full shadow-lg hover:bg-[#4348a3] transition"
-                onClick={() => {
-                  const sessions = JSON.parse(
-                    localStorage.getItem(GAME_SESSIONS_KEY) || "[]"
-                  );
-                  const summary = {
-                    timestamp: new Date().toISOString(),
-                    rounds,
-                    parent_report: parentReport,
-                  };
-                  localStorage.setItem(
-                    GAME_SESSIONS_KEY,
-                    JSON.stringify([...sessions, summary])
-                  );
-                  setRounds([]);
-                  setRoundIndex(0);
-                  setNextRoundIndex(null);
-                  resetRoundState();
-                  setPhase("reading");
-                  generateStoryForRound();
-                }}
-              >
-                Next game
-              </button>
-              <button
-                className="bg-[#FFE066] text-[#1F2A44] text-xl font-bold px-10 py-3 rounded-full shadow-lg hover:bg-[#FFD84D] transition"
-                onClick={() => {
-                  const sessions = JSON.parse(
-                    localStorage.getItem(GAME_SESSIONS_KEY) || "[]"
-                  );
-                  const summary = {
-                    timestamp: new Date().toISOString(),
-                    rounds,
-                    parent_report: parentReport,
-                  };
-                  localStorage.setItem(
-                    GAME_SESSIONS_KEY,
-                    JSON.stringify([...sessions, summary])
-                  );
-                  onBackToIntro?.();
-                }}
-              >
-                Back to menu
-              </button>
+          ) : (
+            <div className="bg-white/80 rounded-3xl shadow-xl p-8 max-w-3xl text-center">
+              <h2 className="text-3xl font-bold text-[#1F2A44] mb-4">
+                Parent Progress Report
+              </h2>
+              <div className="text-lg text-[#1F2A44] space-y-2 mb-6">
+                {Number.isFinite(parentReport.startSpeed) &&
+                  Number.isFinite(parentReport.endSpeed) && (
+                    <p>
+                      Reading speed: {parentReport.startSpeed.toFixed(1)} →{" "}
+                      {parentReport.endSpeed.toFixed(1)} wpm
+                    </p>
+                  )}
+                {Number.isFinite(parentReport.improvement) && (
+                  <p>
+                    Speed change:{" "}
+                    {parentReport.improvement >= 0 ? "+" : ""}
+                    {parentReport.improvement.toFixed(1)} wpm
+                  </p>
+                )}
+                <p>
+                  Average comprehension:{" "}
+                  {(parentReport.avgComprehension * 100).toFixed(0)}%
+                </p>
+              </div>
+              {parentReport.reviewWords.length > 0 && (
+                <div className="text-left">
+                  <p className="font-semibold text-[#1F2A44] mb-2">
+                    Words to review together:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {parentReport.reviewWords.map((word) => (
+                      <span
+                        key={word}
+                        className="bg-[#FFE066] text-[#1F2A44] px-3 py-1 rounded-full text-sm font-semibold"
+                      >
+                        {word}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="mt-6 text-left">
+                <p className="font-semibold text-[#1F2A44] mb-2">
+                  Export logs (parents only)
+                </p>
+                <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">
+                  <input
+                    type="password"
+                    value={exportPassword}
+                    onChange={(e) => setExportPassword(e.target.value)}
+                    placeholder="Password"
+                    className="px-4 py-2 rounded-lg border border-[#cbd5f0] outline-none"
+                  />
+                  <button
+                    className="bg-[#4B50B6] text-yellow-200 text-lg font-bold px-6 py-2 rounded-full shadow-lg hover:bg-[#4348a3] transition"
+                    onClick={handleExportCsv}
+                  >
+                    Export CSV
+                  </button>
+                  {exportError && (
+                    <span className="text-sm text-red-600">{exportError}</span>
+                  )}
+                </div>
+              </div>
+              <div className="mt-6 flex flex-col md:flex-row gap-4 justify-center">
+                <button
+                  className="bg-[#4B50B6] text-yellow-200 text-xl font-bold px-12 py-3 rounded-full shadow-lg hover:bg-[#4348a3] transition"
+                  onClick={() => {
+                    const sessions = JSON.parse(
+                      localStorage.getItem(GAME_SESSIONS_KEY) || "[]"
+                    );
+                    const summary = {
+                      timestamp: new Date().toISOString(),
+                      rounds,
+                      parent_report: parentReport,
+                    };
+                    localStorage.setItem(
+                      GAME_SESSIONS_KEY,
+                      JSON.stringify([...sessions, summary])
+                    );
+                    setRounds([]);
+                    setRoundIndex(0);
+                    setNextRoundIndex(null);
+                    resetRoundState();
+                    setPhase("reading");
+                    generateStoryForRound();
+                  }}
+                >
+                  Next game
+                </button>
+                <button
+                  className="bg-[#FFE066] text-[#1F2A44] text-xl font-bold px-10 py-3 rounded-full shadow-lg hover:bg-[#FFD84D] transition"
+                  onClick={() => {
+                    const sessions = JSON.parse(
+                      localStorage.getItem(GAME_SESSIONS_KEY) || "[]"
+                    );
+                    const summary = {
+                      timestamp: new Date().toISOString(),
+                      rounds,
+                      parent_report: parentReport,
+                    };
+                    localStorage.setItem(
+                      GAME_SESSIONS_KEY,
+                      JSON.stringify([...sessions, summary])
+                    );
+                    onBackToIntro?.();
+                  }}
+                >
+                  Back to menu
+                </button>
+              </div>
+              <div className="absolute bottom-6 right-6">
+                <img
+                  src="/read-to-me.png"
+                  className="w-[100px] md:w-[140px] cursor-pointer hover:scale-105 transition"
+                  alt="Read To Me"
+                  onClick={() =>
+                    speakText(
+                      "Here is the parent progress report. It shows reading speed and comprehension. Use Export CSV to download logs, or choose Next game or Back to menu."
+                    )
+                  }
+                />
+              </div>
             </div>
-            <div className="absolute bottom-6 right-6">
-              <img
-                src="/read-to-me.png"
-                className="w-[100px] md:w-[140px] cursor-pointer hover:scale-105 transition"
-                alt="Read To Me"
-                onClick={() =>
-                  speakText(
-                    "Here is the parent progress report. It shows reading speed and comprehension. Use Export CSV to download logs, or choose Next game or Back to menu."
-                  )
-                }
-              />
-            </div>
-          </div>
+          )}
         </div>
       )}
     </div>
