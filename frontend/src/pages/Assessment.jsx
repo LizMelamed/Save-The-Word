@@ -406,13 +406,20 @@ export default function Assessment({ profile, interests, onDone }) {
                   {q.options.map((label, optIdx) => {
                     const selected =
                       answers[`${storyIndex}-${idx}`] === optIdx;
+                    const isCorrect = optIdx === q.correct_index;
                     return (
                       <button
                         key={optIdx}
                         className={`rounded-full px-8 py-4 text-xl font-bold transition shadow-md ${
-                          selected
-                            ? "bg-[#4B50B6] text-yellow-200"
-                            : "bg-[#FFE066] text-[#1F2A44] hover:bg-[#FFD84D]"
+                          quizSubmitted
+                            ? selected && isCorrect
+                              ? "bg-[#7CF277] text-[#1F2A44] ring-4 ring-[#3A56B4]"
+                              : selected && !isCorrect
+                                ? "bg-[#FF7D72] text-[#1F2A44] ring-4 ring-[#3A56B4]"
+                                : "bg-[#FFE066] text-[#1F2A44]"
+                            : selected
+                              ? "bg-[#4B50B6] text-yellow-200"
+                              : "bg-[#FFE066] text-[#1F2A44] hover:bg-[#FFD84D]"
                         }`}
                         onClick={() =>
                           setAnswers((prev) => ({
@@ -445,12 +452,15 @@ export default function Assessment({ profile, interests, onDone }) {
               ).length !== (currentStory?.questions?.length || 0)
             }
             onClick={() => {
-              setQuizSubmitted(true);
+              if (!quizSubmitted) {
+                setQuizSubmitted(true);
+                return;
+              }
               handleFinishQuestions();
             }}
             style={{ display: "block", marginLeft: "auto", marginRight: "auto" }}
           >
-            Continue
+            {quizSubmitted ? "Continue" : "Check Answers"}
           </button>
           <div className="absolute -bottom-16 right-0 md:right-6">
             <img

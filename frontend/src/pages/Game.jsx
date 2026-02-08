@@ -84,6 +84,7 @@ export default function Game({ profile, interests, onChangeThemes, onBackToIntro
   const [sentenceIndex, setSentenceIndex] = useState(0);
   const [savedCount, setSavedCount] = useState(0);
   const [answers, setAnswers] = useState({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [rounds, setRounds] = useState([]);
   const [nextRoundIndex, setNextRoundIndex] = useState(null);
   const [exportPassword, setExportPassword] = useState("");
@@ -207,6 +208,7 @@ export default function Game({ profile, interests, onChangeThemes, onBackToIntro
     setSentenceIndex(0);
     setSavedCount(0);
     setAnswers({});
+    setQuizSubmitted(false);
     tracker.reset();
   }
 
@@ -675,13 +677,20 @@ export default function Game({ profile, interests, onChangeThemes, onBackToIntro
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 justify-items-center">
                   {q.options.map((label, optIdx) => {
                     const selected = answers[idx] === optIdx;
+                    const isCorrect = optIdx === q.correct_index;
                     return (
                       <button
                         key={optIdx}
                         className={`rounded-full px-8 py-4 text-xl font-bold transition shadow-md ${
-                          selected
-                            ? "bg-[#4B50B6] text-yellow-200"
-                            : "bg-[#FFE066] text-[#1F2A44] hover:bg-[#FFD84D]"
+                          quizSubmitted
+                            ? selected && isCorrect
+                              ? "bg-[#7CF277] text-[#1F2A44] ring-4 ring-[#3A56B4]"
+                              : selected && !isCorrect
+                                ? "bg-[#FF7D72] text-[#1F2A44] ring-4 ring-[#3A56B4]"
+                                : "bg-[#FFE066] text-[#1F2A44]"
+                            : selected
+                              ? "bg-[#4B50B6] text-yellow-200"
+                              : "bg-[#FFE066] text-[#1F2A44] hover:bg-[#FFD84D]"
                         }`}
                         onClick={() =>
                           setAnswers((prev) => ({
@@ -689,6 +698,7 @@ export default function Game({ profile, interests, onChangeThemes, onBackToIntro
                             [idx]: optIdx,
                           }))
                         }
+                        disabled={quizSubmitted}
                       >
                         {label}
                       </button>
@@ -706,10 +716,16 @@ export default function Game({ profile, interests, onChangeThemes, onBackToIntro
                 : "bg-[#8AA1D6] text-yellow-100 opacity-60 cursor-not-allowed"
             }`}
             disabled={Object.keys(answers).length !== questions.length}
-            onClick={() => finalizeRound()}
+            onClick={() => {
+              if (!quizSubmitted) {
+                setQuizSubmitted(true);
+                return;
+              }
+              finalizeRound();
+            }}
             style={{ display: "block", marginLeft: "auto", marginRight: "auto" }}
           >
-            Proceed
+            {quizSubmitted ? "Proceed" : "Check Answers"}
           </button>
           <div className="absolute -bottom-16 right-0 md:right-6">
             <img
